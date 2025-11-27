@@ -1,0 +1,40 @@
+scenarios:
+  no_chaos:
+    description: "Cenário base sem injeção de falhas (apenas reset)"
+    rules: []
+    reset_after: true
+
+  delay_lo_100ms:
+    description: "Adiciona 100ms de delay na interface lo durante a experiência"
+    rules:
+      - type: "delay"
+        iface: "lo"
+        delay_ms: 100
+    reset_after: true #false se for para sempre se não o comando sem tempo é inutil
+
+  loss_lo_10pct:
+    description: "Perda de 10% de pacotes na lo"
+    rules:
+      - type: "loss"
+        iface: "lo"
+        loss_pct: 10
+    reset_after: true
+
+  jitter_lo_80ms:
+    description: "Delay 100ms com jitter de 80ms na lo"
+    rules:
+      - type: "jitter"
+        iface: "lo"
+        delay_ms: 100
+        jitter_ms: 80
+    reset_after: true
+
+  composite_lo_delay100_loss20:
+    description: "Delay 100ms e loss 20% em simultâneo na lo"
+    rules:
+      - type: "netem"
+        iface: "lo"
+        delay_ms: 100
+        jitter_ms: 20
+        loss_pct: 20
+    reset_after: true
