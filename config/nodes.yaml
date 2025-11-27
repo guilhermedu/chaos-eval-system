@@ -1,0 +1,17 @@
+nodes:
+  N1:
+    ip: "127.0.0.1"
+    port: 6001
+  N2:
+    ip: "127.0.0.1"
+    port: 6002
+  N3:
+    ip: "127.0.0.1"
+    port: 6003
+  N4:
+    ip: "127.0.0.1"
+    port: 6004
+  # depois podes adicionar N3, N4, ...
+  # N3:
+  #   ip: "127.0.0.1"
+  #   port: 6003
