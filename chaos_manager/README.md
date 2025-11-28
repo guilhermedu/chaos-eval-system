@@ -21,3 +21,21 @@ Enquanto isso:
 -   alguns valores podem ser null (por causa da loss 20%)
 
 -   Depois dos 15s, o reset_after: true limpa o tc e tudo volta ao normal.
+
+
+```bash
+python3 -m chaos_manager.manager --list-nodes --nodes-cfg config/chaos_nodes.yaml
+
+cenário remoto 
+sudo python3 -m chaos_manager.manager \
+  --scenario delay_100ms \
+  --target-node N3 \
+  --duration 20 \
+  --nodes-cfg config/chaos_nodes.yaml
+
+cenário local
+sudo python3 -m chaos_manager.manager \
+  --scenario delay_100ms \
+  --duration 20
+
+```

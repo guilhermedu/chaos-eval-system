@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 from pathlib import Path
 import json
 import time
@@ -9,10 +9,11 @@ LOG_FILE = LOG_DIR / "metrics.log"
 app = Flask(__name__, template_folder="templates")
 
 
-def load_recent_metrics(window_seconds: float = 10.0):
+def load_recent_metrics(metric_name: str = "rtt_ms",
+                        window_seconds: float = 10.0):
     """
-    Lê o metrics.log e devolve apenas as métricas dos últimos N segundos.
-    Isto é suficiente para um dashboard simples.
+    Lê o metrics.log e devolve apenas as métricas do tipo 'metric_name'
+    dos últimos N segundos.
     """
     now = time.time()
     cutoff = now - window_seconds
@@ -31,8 +32,9 @@ def load_recent_metrics(window_seconds: float = 10.0):
             except json.JSONDecodeError:
                 continue
 
-            if msg.get("metric") != "rtt_ms":
+            if msg.get("metric") != metric_name:
                 continue
+
             value = msg.get("value")
             if value is None:
                 continue
@@ -60,7 +62,9 @@ def index():
 
 @app.route("/api/latest")
 def api_latest():
-    data = load_recent_metrics(window_seconds=20.0)
+    # métrica pedida pelo frontend (default: rtt_ms)
+    metric_name = request.args.get("metric", "rtt_ms")
+    data = load_recent_metrics(metric_name=metric_name, window_seconds=20.0)
     return jsonify(data)
 
 

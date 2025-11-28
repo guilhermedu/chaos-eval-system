@@ -1,0 +1,20 @@
+nodes:
+  N1:
+    host: "192.168.1.101"
+    user: "guilherme"
+    project_path: "/home/guilherme/Documentos/if/chaos-eval-system"
+
+  N2:
+    host: "192.168.1.102"
+    user: "guilherme"
+    project_path: "/home/guilherme/Documentos/if/chaos-eval-system"
+
+  N3:
+    host: "192.168.1.103"
+    user: "guilherme"
+    project_path: "/home/guilherme/Documentos/if/chaos-eval-system"
+
+  N4:
+    host: "192.168.1.104"
+    user: "guilherme"
+    project_path: "/home/guilherme/Documentos/if/chaos-eval-system"

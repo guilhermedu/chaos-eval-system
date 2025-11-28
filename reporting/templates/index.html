@@ -49,12 +49,20 @@
 </head>
 <body>
   <h1>Chaos Evaluation Dashboard</h1>
-  <div class="subtitle">
-    RTT (ms) entre nós — atualização automática a cada 2 segundos.
+  <div class="subtitle" id="subtitle">
+    Métricas entre nós — atualização automática a cada 2 segundos.
   </div>
   <div id="chart-container">
     <canvas id="rttChart"></canvas>
     <div class="controls">
+      <div>
+        Métrica:
+        <select id="metricSelect">
+          <option value="rtt_ms">RTT (ms)</option>
+          <option value="throughput_kbps">Throughput (kbps)</option>
+          <option value="app_latency_ms">App latency (ms)</option>
+        </select>
+      </div>
       <div>
         Ligação:
         <select id="linkSelect"></select>
@@ -65,6 +73,22 @@
 
   <script>
     const ctx = document.getElementById('rttChart').getContext('2d');
+
+    // metadados por métrica
+    const metricMeta = {
+      'rtt_ms': {
+        label: 'RTT (ms)',
+        yLabel: 'ms'
+      },
+      'throughput_kbps': {
+        label: 'Throughput (kbps)',
+        yLabel: 'kbps'
+      },
+      'app_latency_ms': {
+        label: 'App latency (ms)',
+        yLabel: 'ms'
+      }
+    };
 
     const chartData = {
       labels: [],
@@ -101,8 +125,10 @@
       options: chartOptions
     });
 
-    const linkSelect = document.getElementById('linkSelect');
-    const statusEl = document.getElementById('status');
+    const linkSelect   = document.getElementById('linkSelect');
+    const metricSelect = document.getElementById('metricSelect');
+    const statusEl     = document.getElementById('status');
+    const subtitleEl   = document.getElementById('subtitle');
 
     let allPoints = [];
 
@@ -127,8 +153,13 @@
     }
 
     function updateChart() {
+      const currentMetric = metricSelect.value;
+
       if (!allPoints.length) {
         statusEl.textContent = 'Sem dados recentes...';
+        chartData.labels = [];
+        chartData.datasets[0].data = [];
+        rttChart.update();
         return;
       }
 
@@ -137,6 +168,9 @@
       const selectedLink = linkSelect.value || (linkSelect.options[0]?.value ?? null);
       if (!selectedLink) {
         statusEl.textContent = 'Sem ligações disponíveis.';
+        chartData.labels = [];
+        chartData.datasets[0].data = [];
+        rttChart.update();
         return;
       }
 
@@ -146,16 +180,26 @@
         p => p.nodeId === nodeId && p.peerId === peerId
       );
 
-      chartData.labels = filtered.map(p => new Date(p.timestamp * 1000).toLocaleTimeString());
+      chartData.labels = filtered.map(p =>
+        new Date(p.timestamp * 1000).toLocaleTimeString()
+      );
       chartData.datasets[0].data = filtered.map(p => p.value);
 
+      // atualizar labels/unidades conforme a métrica
+      const meta = metricMeta[currentMetric] || metricMeta['rtt_ms'];
+      chartData.datasets[0].label = meta.label;
+      rttChart.options.scales.y.title.text = meta.yLabel;
+
       rttChart.update();
-      statusEl.textContent = `Mostrando ${filtered.length} pontos para ${selectedLink}`;
+      statusEl.textContent = `Mostrando ${filtered.length} pontos para ${selectedLink} (${meta.label})`;
+      subtitleEl.textContent =
+        `Métrica: ${meta.label} — atualização automática a cada 2 segundos.`;
     }
 
     async function fetchLatest() {
+      const currentMetric = metricSelect.value;
       try {
-        const res = await fetch('/api/latest');
+        const res = await fetch('/api/latest?metric=' + encodeURIComponent(currentMetric));
         const data = await res.json();
         allPoints = data;
         updateChart();
@@ -170,6 +214,7 @@
     fetchLatest();
 
     linkSelect.addEventListener('change', updateChart);
+    metricSelect.addEventListener('change', fetchLatest);
   </script>
 </body>
 </html>

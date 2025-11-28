@@ -1,27 +1,98 @@
 scenarios:
+  # =======================
+  # T0 — Baseline / Reset
+  # =======================
+
   no_chaos:
-    description: "Cenário base sem injeção de falhas (apenas reset)"
+    description: "Cenário base sem injeção de falhas (apenas reset do estado da interface)."
     rules: []
     reset_after: true
 
+
+
+  # =======================
+  # T1 — Delay constante
+  # =======================
+
+  delay_lo_50ms:
+    description: "Delay constante de 50ms na interface lo (RTT ~100ms)."
+    rules:
+      - type: "delay"
+        iface: "lo"
+        delay_ms: 50
+    reset_after: true
+
   delay_lo_100ms:
-    description: "Adiciona 100ms de delay na interface lo durante a experiência"
+    description: "Delay constante de 100ms na interface lo (RTT ~200ms)."
     rules:
       - type: "delay"
         iface: "lo"
         delay_ms: 100
-    reset_after: true #false se for para sempre se não o comando sem tempo é inutil
+    reset_after: true
+
+  delay_lo_200ms:
+    description: "Delay constante de 200ms na interface lo (RTT ~400ms)."
+    rules:
+      - type: "delay"
+        iface: "lo"
+        delay_ms: 200
+    reset_after: true
+
+
+
+  # =======================
+  # T2 — Loss (perda aleatória)
+  # =======================
+
+  loss_lo_1pct:
+    description: "Perda aleatória de ~1% dos pacotes na interface lo (rede quase boa, mas não perfeita)."
+    rules:
+      - type: "loss"
+        iface: "lo"
+        loss_pct: 1
+    reset_after: true
+
+  loss_lo_5pct:
+    description: "Perda aleatória de ~5% dos pacotes na interface lo (congestão moderada)."
+    rules:
+      - type: "loss"
+        iface: "lo"
+        loss_pct: 5
+    reset_after: true
 
   loss_lo_10pct:
-    description: "Perda de 10% de pacotes na lo"
+    description: "Perda aleatória de ~10% dos pacotes na interface lo (rede problemática)."
     rules:
       - type: "loss"
         iface: "lo"
         loss_pct: 10
     reset_after: true
 
+  loss_lo_20pct:
+    description: "Perda aleatória de ~20% dos pacotes na interface lo (rede quase inutilizável)."
+    rules:
+      - type: "loss"
+        iface: "lo"
+        loss_pct: 20
+    reset_after: true
+
+
+
+  # =======================
+  # T3 — Jitter (delay variável)
+  # =======================
+
+  jitter_lo_20ms:
+    description: "Delay base 40ms com jitter 20ms (RTT moderadamente instável)."
+    rules:
+      - type: "jitter"
+        iface: "lo"
+        delay_ms: 40
+        jitter_ms: 20
+    reset_after: true
+
   jitter_lo_80ms:
-    description: "Delay 100ms com jitter de 80ms na lo"
+    description: "Delay base 100ms com jitter 80ms (RTT muito variável, pior para streaming/jogos)."
     rules:
       - type: "jitter"
         iface: "lo"
@@ -29,12 +100,123 @@ scenarios:
         jitter_ms: 80
     reset_after: true
 
+  jitter_lo_120ms:
+    description: "Delay base 150ms com jitter 120ms (variação extrema, simula mobilidade / handovers)."
+    rules:
+      - type: "jitter"
+        iface: "lo"
+        delay_ms: 150
+        jitter_ms: 120
+    reset_after: true
+
+
+
+  # =======================
+  # T4 — Combinado (delay + jitter + loss)
+  # =======================
+
   composite_lo_delay100_loss20:
-    description: "Delay 100ms e loss 20% em simultâneo na lo"
+    description: "Delay 100ms, jitter 20ms e loss 20% em simultâneo (rede muito instável)."
     rules:
       - type: "netem"
         iface: "lo"
         delay_ms: 100
         jitter_ms: 20
         loss_pct: 20
+    reset_after: true
+
+  composite_lo_mobile_light:
+    description: "Perfil tipo rede móvel moderada: delay 60ms, jitter 30ms, loss 3%."
+    rules:
+      - type: "netem"
+        iface: "lo"
+        delay_ms: 60
+        jitter_ms: 30
+        loss_pct: 3
+    reset_after: true
+
+  composite_lo_mobile_heavy:
+    description: "Rede móvel saturada: delay 120ms, jitter 60ms, loss 10%."
+    rules:
+      - type: "netem"
+        iface: "lo"
+        delay_ms: 120
+        jitter_ms: 60
+        loss_pct: 10
+    reset_after: true
+
+  composite_lo_extreme:
+    description: "Cenário extremo para stress-test: delay 200ms, jitter 100ms, loss 20%."
+    rules:
+      - type: "netem"
+        iface: "lo"
+        delay_ms: 200
+        jitter_ms: 100
+        loss_pct: 20
+    reset_after: true
+
+
+
+  # =======================
+  # T5 — Throttling (rate limit)
+  # =======================
+
+  rate_lo_5mbit:
+    description: "Throttling ligeiro: largura de banda limitada a 5 Mbit/s na lo."
+    rules:
+      - type: "rate"
+        iface: "lo"
+        rate: "5mbit"
+        burst: "64kbit"
+        latency_ms: 100
+    reset_after: true
+
+  rate_lo_1mbit:
+    description: "Throttling mais agressivo: largura de banda limitada a 1 Mbit/s na lo."
+    rules:
+      - type: "rate"
+        iface: "lo"
+        rate: "1mbit"
+        burst: "32kbit"
+        latency_ms: 400
+    reset_after: true
+
+  rate_lo_512kbit:
+    description: "Throttling severo: largura de banda limitada a 512 kbit/s na lo."
+    rules:
+      - type: "rate"
+        iface: "lo"
+        rate: "512kbit"
+        burst: "32kbit"
+        latency_ms: 400
+    reset_after: true
+
+
+
+  # =======================
+  # T6 — Network Partition (para probes / serviços)
+  # =======================
+  # Aqui assumes que os probes usam UDP nas portas 6001, 6002, 6003, etc.
+
+  partition_probe_N2:
+    description: "Isola o node N2 da perspetiva dos probes (DROP UDP para porta 6002)."
+    rules:
+      - type: "partition"
+        port: 6002
+    reset_after: true
+
+  partition_probe_N3:
+    description: "Isola o node N3 (DROP UDP para porta 6003)."
+    rules:
+      - type: "partition"
+        port: 6003
+    reset_after: true
+
+  # Exemplo de partition mais genérico: corta um serviço TCP/UDP específico
+  # (por exemplo, porta de um micro-serviço de file storage).
+  partition_service_9000:
+    description: "Corta totalmente o acesso a um serviço na porta 9000 (simula falha completa do serviço)."
+    rules:
+      - type: "partition"
+        port: 9000
     reset_after: true
